@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pamela-ia</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #121212; color: #fff; margin: 0; padding: 20px; }
+        #chat-box { height: 400px; overflow-y: auto; border: 1px solid #333; padding: 10px; margin-bottom: 10px; border-radius: 8px; }
+        .mensaje-usuario { color: #8ab4f8; margin: 5px 0; }
+        .mensaje-ia { color: #c2e7ff; margin: 5px 0; }
+        .input-container { display: flex; gap: 10px; }
+        input { flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff; }
+        button { padding: 10px 20px; border-radius: 4px; border: none; background: #bb86fc; color: #000; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h2>Pamela-ia</h2>
+    <div id="chat-box"></div>
+
+    <div class="input-container">
+        <input type="text" id="userInput" placeholder="Escribí tu mensaje..." onkeypress="if(event.key === 'Enter') enviarMensaje()">
+        <button onclick="enviarMensaje()">Enviar</button>
+    </div>
+
+    <script>
+        async function enviarMensaje() {
+            const input = document.getElementById('userInput');
+            const chatBox = document.getElementById('chat-box');
+            const mensaje = input.value.trim();
+
+            if (!mensaje) return;
+
+            chatBox.innerHTML += `<div class="mensaje-usuario"><b>Tú:</b> ${mensaje}</div>`;
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const urlServidor = 'https://pamela-ia.onrender.com/api/chat';
+
+                const response = await fetch(urlServidor, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: mensaje })
+                });
+
+                if (!response.ok) throw new Error('Error en el servidor');
+
+                const data = await response.json();
+                const respuestaTexto = typeof data === 'object' ? (data.respuesta || JSON.stringify(data)) : data;
+                chatBox.innerHTML += `<div class="mensaje-ia"><b>Pamela:</b> ${respuestaTexto}</div>`;
+            } catch (error) {
+                console.error("Error:", error);
+                chatBox.innerHTML += `<div class="mensaje-ia" style="color: #ff6b6b;"><b>Error:</b> No se pudo conectar con el servidor de Render.</div>`;
+            }
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
