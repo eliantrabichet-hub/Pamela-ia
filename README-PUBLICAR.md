@@ -1,35 +1,65 @@
-# Publicar Pamela AI en Render
+cat << 'EOF' > src/main/resources/static/index.html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Pamela-ia</title>
+                <style>
+                        body { font-family: Arial, sans-serif; background-color: #121212; color: #fff; margin: 0; padding: 20px; }
+                                #chat-box { height: 400px; overflow-y: auto; border: 1px solid #333; padding: 10px; margin-bottom: 10px; border-radius: 8px; }
+                                        .mensaje-usuario { color: #8ab4f8; margin: 5px 0; }
+                                                .mensaje-ia { color: #c2e7ff; margin: 5px 0; }
+                                                        .input-container { display: flex; gap: 10px; }
+                                                                input { flex: 1; padding: 10px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff; }
+                                                                        button { padding: 10px 20px; border-radius: 4px; border: none; background: #bb86fc; color: #000; font-weight: bold; cursor: pointer; }
+                                                                            </style>
+                                                                            </head>
+                                                                            <body>
 
-## Incluye
-- Interfaz Pamela en `src/main/resources/static/index.html`
-- Backend Java / Spring Boot
-- Dockerfile para Render
-- Historial H2 local
+                                                                                <h2>Pamela-ia</h2>
+                                                                                    <div id="chat-box"></div>
 
-## Antes de publicar
-1. Verificá que la aplicación funcione localmente.
-2. La clave de API NO debe ir en HTML, JavaScript, Git ni en un repositorio público.
-3. Para publicar una app accesible públicamente, agregá autenticación o límites de uso para evitar que terceros consuman tu cuota de API.
+                                                                                        <div class="input-container">
+                                                                                                <input type="text" id="userInput" placeholder="Escribí tu mensaje..." onkeypress="if(event.key === 'Enter') enviarMensaje()">
+                                                                                                        <button onclick="enviarMensaje()">Enviar</button>
+                                                                                                            </div>
 
-## Publicación en Render
-1. Subí el contenido de esta carpeta a un repositorio Git.
-2. En Render, creá un servicio nuevo de tipo Web Service y conectá el repositorio.
-3. Elegí Docker como runtime. Render detectará el `Dockerfile` de la raíz.
-4. En Environment agregá:
-   - `PAMELA_API_KEY` = tu clave privada del proveedor de IA
-   - `PAMELA_API_URL` = `https://api.openai.com/v1/chat/completions` (si usás un proveedor compatible)
-   - `PAMELA_API_MODEL` = el modelo disponible en tu cuenta, por ejemplo `gpt-4o-mini`
-5. Iniciá el deploy y esperá a que termine.
-6. Abrí la URL `onrender.com` que Render asigne al servicio.
+                                                                                                                <script>
+                                                                                                                        async function enviarMensaje() {
+                                                                                                                                    const input = document.getElementById('userInput');
+                                                                                                                                                const chatBox = document.getElementById('chat-box');
+                                                                                                                                                            const mensaje = input.value.trim();
 
-## Memoria e historial
-La base H2 se guarda en `/app/data`. Los sistemas de archivos de los servicios Render son efímeros por defecto. Para conservar el historial después de reinicios y nuevos deploys, agregá un Persistent Disk (función de pago) con mount path `/app/data`. Otra opción más escalable es migrar a una base de datos PostgreSQL administrada.
+                                                                                                                                                                        if (!mensaje) return;
 
-## Prueba
-Abrí la URL pública y enviá un mensaje. Si falla, revisá Logs en Render y verificá que la clave y el modelo sean correctos.
+                                                                                                                                                                                    chatBox.innerHTML += `<div class="mensaje-usuario"><b>Tú:</b> ${mensaje}</div>`;
+                                                                                                                                                                                                input.value = '';
+                                                                                                                                                                                                            chatBox.scrollTop = chatBox.scrollHeight;
 
-## Seguridad
-- No compartas ni publiques la clave API.
-- No habilites H2 Console en internet.
-- Antes de compartir públicamente, añadí inicio de sesión, límites por usuario, límites de gasto y protección contra abuso.
-- Revisá las condiciones de edad, facturación y uso del proveedor de IA y de la plataforma de alojamiento; pedí ayuda a una persona adulta responsable si hace falta.
+                                                                                                                                                                                                                        try {
+                                                                                                                                                                                                                                        const urlServidor = 'https://pamela-ia.onrender.com/api/chat';
+
+                                                                                                                                                                                                                                                        const response = await fetch(urlServidor, {
+                                                                                                                                                                                                                                                                            method: 'POST',
+                                                                                                                                                                                                                                                                                                headers: { 'Content-Type': 'application/json' },
+                                                                                                                                                                                                                                                                                                                    body: JSON.stringify({ prompt: mensaje })
+                                                                                                                                                                                                                                                                                                                                    });
+
+                                                                                                                                                                                                                                                                                                                                                    if (!response.ok) throw new Error('Error en el servidor');
+
+                                                                                                                                                                                                                                                                                                                                                                    const data = await response.json();
+                                                                                                                                                                                                                                                                                                                                                                                    const respuestaTexto = typeof data === 'object' ? (data.respuesta || JSON.stringify(data)) : data;
+                                                                                                                                                                                                                                                                                                                                                                                                    chatBox.innerHTML += `<div class="mensaje-ia"><b>Pamela:</b> ${respuestaTexto}</div>`;
+                                                                                                                                                                                                                                                                                                                                                                                                                } catch (error) {
+                                                                                                                                                                                                                                                                                                                                                                                                                                console.error("Error:", error);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                chatBox.innerHTML += `<div class="mensaje-ia" style="color: #ff6b6b;"><b>Error:</b> No se pudo conectar con el servidor de Render.</div>`;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                        chatBox.scrollTop = chatBox.scrollHeight;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </script>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </body>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    EOF
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
