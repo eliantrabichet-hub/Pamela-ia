@@ -1,0 +1,12 @@
+{
+  "name": "pamela-ia",
+  "version": "1.0.0",
+  "description": "Pamela IA para todos",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1"
+  }
+}
